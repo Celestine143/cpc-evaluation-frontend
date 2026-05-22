@@ -1,165 +1,233 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    fullname: '',
-    email: '',
-    password: '',
-    confirm_password: '',
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('userRole');
-        if (token && role) {
-            const lowerRole = role.toLowerCase();
-            if (lowerRole === 'admin') router.push('/admin-dashboard');
-            else if (lowerRole === 'teacher') router.push('/teacher-dash-eval');
-            else if (lowerRole === 'student') router.push('/student-dash-eval');
-        }
-    }, [router]);
+    const [name, setName] = useState<string>('');
+    const [idNumber, setIdNumber] = useState<string>('');
+    const [course, setCourse] = useState<string>('');
+    const [yearLevel, setYearLevel] = useState<string>('');
+    const [section, setSection] = useState<string>('');
+    const [password, setPassword] = useState<string>('');
     
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const [error, setError] = useState<string>('');
+    const [loading, setLoading] = useState<boolean>(false);
+    
+    const router = useRouter();
 
-    if (formData.password !== formData.confirm_password) {
-      alert("Passwords do not match");
-      return;
-    }
+    // State to hold the dynamic sections array
+    const [availableSections, setAvailableSections] = useState<string[]>(['A', 'B', 'C', 'D']);
 
-    try {
-      const res = await fetch('http://127.0.0.1:8000/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fullname: formData.fullname,
-          email: formData.email,
-          password: formData.password,
-          password_confirmation: formData.confirm_password, 
-        }),
-      });
+    // Watch the selected course to update allowed section dropdown choices dynamically
+    useEffect(() => {
+        if (course === 'Bachelor of Science in Hospitality Management') {
+            // BSHM gets Sections A through I
+            setAvailableSections(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I']);
+        } else {
+            // Default baseline configuration for BSIT, BSED, and BEED
+            setAvailableSections(['A', 'B', 'C', 'D']);
+        }
 
-      const data = await res.json();
+        // Reset the chosen section value if it falls out of bounds when shifting course tracks
+        setSection('');
+    }, [course]);
 
-      if (res.ok) {
-        alert('Account created successfully');
-        router.push('/login');
-      } else {
-        alert(data.message || 'Error: Cannot create account');
-      }
-    } catch (error) {
-      alert("Server connection failed. Make sure Laravel is running!");
-    }
-  };
+    const handleRegisterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
 
-  return (
-    <div className="min-h-screen bg-[#e8e8ff] flex items-center justify-center p-4 font-sans text-black">
-      <div className="max-w-[550px] w-full bg-white rounded-[40px] shadow-xl p-10 sm:p-14 text-center">
-        
-        {/* Title matches the size and boldness of "Verification" and "Sign In" */}
-        <h2 className="text-[32px] font-bold text-[#4453f5] mb-10">Sign Up</h2>
-        
-        <form onSubmit={handleSubmit} className="text-left space-y-6">
-          {/* Full Name */}
-          <div>
-            <label className="block text-[#4453f5] text-lg font-semibold ml-4 mb-2">Full Name</label>
-            <input
-              type="text"
-              required
-              className="w-full rounded-full px-6 py-4 bg-[#e8e8ff] border border-[#86b7fe] outline-none focus:ring-2 ring-[#4453f5] transition text-base placeholder-gray-500"
-              placeholder="Input your fullname here..."
-              onChange={(e) => setFormData({ ...formData, fullname: e.target.value })}
-            />
-          </div>
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    id_number: idNumber,
+                    course: course,
+                    year_level: yearLevel,
+                    section: `Section ${section}`, // Submits formatted string e.g., "Section E"
+                    password: password,
+                }),
+            });
 
-          {/* Email Address */}
-          <div>
-            <label className="block text-[#4453f5] text-lg font-semibold ml-4 mb-2">Email Address</label>
-            <input
-              type="email"
-              required
-              className="w-full rounded-full px-6 py-4 bg-[#e8e8ff] border border-[#86b7fe] outline-none focus:ring-2 ring-[#4453f5] transition text-base placeholder-gray-500"
-              placeholder="Input your email address..."
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
+            const data = await response.json();
 
-          {/* Password */}
-          <div className="relative">
-            <label className="block text-[#4453f5] text-lg font-semibold ml-4 mb-2">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                className="w-full rounded-full px-6 py-4 bg-[#e8e8ff] border border-[#86b7fe] outline-none focus:ring-2 ring-[#4453f5] transition text-base placeholder-gray-500"
-                placeholder="••••••"
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-6 top-1/2 -translate-y-1/2 text-[#4453f5]"
-              >
-                {showPassword ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed.');
+            }
+
+            // 1. Save credentials to localStorage for automatic login session persistence
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('userRole', data.user.role);
+            localStorage.setItem('userName', data.user.name);
+            
+            // Store dynamic fields so the profile displays data instantly without loading blank
+            localStorage.setItem('userData', JSON.stringify({
+                name: data.user.name,
+                role: data.user.role,
+                studentId: data.user.id_number,
+                course: data.user.course,
+                yearLevel: data.user.year_level,
+                section: data.user.section
+            }));
+
+            // 2. Alert success and route directly to the active student dashboard
+            alert('Registration successful! Redirecting to your dashboard...'); 
+            router.push('/student-dash-eval'); 
+
+        } catch (err: any) {
+            setError(err.message || 'Something went wrong during registration.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#f0f2ff] flex items-center justify-center font-sans antialiased text-slate-800 p-4">
+            <div className="w-full max-w-md bg-white rounded-[32px] p-8 shadow-md border border-slate-100 flex flex-col">
+                
+                {/* Header Branding */}
+                <div className="flex flex-col items-center gap-2 mb-6 text-center">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md overflow-hidden p-0.5">
+                        <img 
+                            src="/images/CPC.jpg" 
+                            alt="CPC Logo" 
+                            className="w-full h-full object-contain rounded-full"
+                        />
+                    </div>
+                    <h2 className="text-[#445cf5] text-2xl font-bold tracking-wide">CPC Portal Registration</h2>
+                    <p className="text-slate-500 text-sm">Create your student profile account</p>
+                </div>
+
+                {/* Error Banner Alert */}
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm mb-4 font-medium">
+                        {error}
+                    </div>
                 )}
-              </button>
+
+                {/* Registration Data Form */}
+                <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4">
+                    
+                    {/* Full Name */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[#445cf5] font-bold text-xs uppercase tracking-wider">Full Name</label>
+                        <input 
+                            type="text" 
+                            required
+                            placeholder="e.g. John Doe"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#445cf5] transition duration-150 text-slate-800"
+                        />
+                    </div>
+
+                    {/* Student ID Number */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[#445cf5] font-bold text-xs uppercase tracking-wider">Student ID Number</label>
+                        <input 
+                            type="text" 
+                            required
+                            placeholder="e.g. 2026-0042"
+                            value={idNumber}
+                            onChange={(e) => setIdNumber(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#445cf5] transition duration-150 text-slate-800"
+                        />
+                    </div>
+
+                    {/* Course Program Dropdown Selection */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[#445cf5] font-bold text-xs uppercase tracking-wider">Course Program</label>
+                        <select 
+                            required
+                            value={course}
+                            onChange={(e) => setCourse(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#445cf5] transition duration-150 text-slate-800"
+                        >
+                            <option value="">Select your course</option>
+                            <option value="Bachelor of Science in Hospitality Management">BS in Hospitality Management (BSHM)</option>
+                            <option value="Bachelor of Science in Information Technology">BS in Information Technology (BSIT)</option>
+                            <option value="Bachelor of Elementary Education">Bachelor of Elementary Education (BEED)</option>
+                            <option value="Bachelor of Secondary Education">Bachelor of Secondary Education (BSED)</option>
+                        </select>
+                    </div>
+
+                    {/* Year Level & Dynamic Section Selection Dropdowns */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[#445cf5] font-bold text-xs uppercase tracking-wider">Year Level</label>
+                            <select 
+                                required
+                                value={yearLevel}
+                                onChange={(e) => setYearLevel(e.target.value)}
+                                className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#445cf5] transition duration-150 text-slate-800"
+                            >
+                                <option value="">Select Year</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                            </select>
+                        </div>
+
+                        {/* Dynamic Section Dropdown Element */}
+                        <div className="flex flex-col gap-1">
+                            <label className="text-[#445cf5] font-bold text-xs uppercase tracking-wider">Section</label>
+                            <select 
+                                required
+                                value={section}
+                                onChange={(e) => setSection(e.target.value)}
+                                className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#445cf5] transition duration-150 text-slate-800"
+                            >
+                                <option value="">Select Section</option>
+                                {availableSections.map((letter) => (
+                                    <option key={letter} value={letter}>
+                                        Section {letter}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Password */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-[#445cf5] font-bold text-xs uppercase tracking-wider">Account Password</label>
+                        <input 
+                            type="password" 
+                            required
+                            placeholder="Minimum 8 characters"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#445cf5] transition duration-150 text-slate-800"
+                        />
+                    </div>
+
+                    {/* Submit Button */}
+                    <button 
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-[#445cf5] text-white py-3 rounded-xl font-semibold shadow-md hover:bg-opacity-95 active:scale-[0.99] transition duration-150 disabled:opacity-50 mt-2 text-center"
+                    >
+                        {loading ? 'Setting up session...' : 'Register & Log In'}
+                    </button>
+                </form>
+
+                {/* Return Link */}
+                <div className="text-center mt-6 text-sm text-slate-500">
+                    Already have an account?{' '}
+                    <button 
+                        onClick={() => router.push('/login')}
+                        className="text-[#445cf5] font-semibold underline hover:text-opacity-80"
+                    >
+                        Sign In here
+                    </button>
+                </div>
+
             </div>
-          </div>
-
-          {/* Confirm Password */}
-          <div className="relative">
-            <label className="block text-[#4453f5] text-lg font-semibold ml-4 mb-2">Confirm Password</label>
-            <div className="relative">
-              <input
-                type={showConfirm ? "text" : "password"}
-                required
-                className="w-full rounded-full px-6 py-4 bg-[#e8e8ff] border border-[#86b7fe] outline-none focus:ring-2 ring-[#4453f5] transition text-base placeholder-gray-500"
-                placeholder="••••••"
-                onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-6 top-1/2 -translate-y-1/2 text-[#4453f5]"
-              >
-                {showConfirm ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" className="w-full mt-4 bg-[#4453f5] text-white font-bold py-4 rounded-full text-xl hover:bg-[#3543d6] transition-all transform active:scale-95 shadow-lg">
-            Sign Up
-          </button>
-        </form>
-
-        <p className="text-center mt-6 text-lg">
-          Already have an account? <Link href="/login" className="text-[#4453f5] font-bold hover:underline">Sign In</Link>
-        </p>
-      </div>
-    </div>
-  );
+        </div>
+    );
 }

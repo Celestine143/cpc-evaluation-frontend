@@ -1,72 +1,126 @@
-'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+"use client";
+import React, { useState, useEffect } from 'react';
 
 export default function AdminDashboard() {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
+  const [teachers, setTeachers] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('Teachers');
+  
+  const [formData, setFormData] = useState({ name: '', id_number: '', password: '', role: 'teacher' });
+  const [instData, setInstData] = useState({ name: '', subject: '', course: '' });
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('userRole');
+  const fetchData = async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch('http://127.0.0.1:8000/api/teachers', { 
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json' 
+        } 
+    });
+    if (res.ok) setTeachers(await res.json());
+  };
 
-        if (!token || role?.toLowerCase() !== 'admin') {
-            router.push('/login');
-        } else {
-            setIsLoading(false);
-        }
-    }, [router]);
+  useEffect(() => { fetchData(); }, []);
 
-    const handleLogout = () => {
-        localStorage.clear();
-        router.push('/login');
-    };
+  const handleTeacherSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/admin/create-user', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify(formData)
+      });
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-[#e8e8ff] text-[#4453f5] font-bold">Loading Admin Panel...</div>;
+      const data = await res.json();
+      if (res.ok) {
+        alert('Teacher Account Created!');
+        setIsModalOpen(false);
+        setFormData({ name: '', id_number: '', password: '', role: 'teacher' });
+        fetchData();
+      } else {
+        alert(data.message || 'Failed to create user');
+      }
+    } catch (err) {
+      alert('Network error. Check if Laravel is running.');
+    }
+  };
 
-    return (
-        <div className="flex min-h-screen bg-[#e8e8ff] font-sans text-black">
-            {/* Sidebar */}
-            <div className="w-64 bg-[#4453f5] text-white p-6 flex flex-col">
-                <h2 className="font-black text-xl mb-10 border-b border-white/20 pb-4">CPC ADMIN</h2>
-                <nav className="space-y-4 flex-1">
-                    <div className="bg-white/20 p-3 rounded-xl cursor-pointer font-bold">Dashboard</div>
-                    <div className="p-3 hover:bg-white/10 rounded-xl cursor-pointer transition">Manage Teachers</div>
-                    <div className="p-3 hover:bg-white/10 rounded-xl cursor-pointer transition">Manage Students</div>
-                    <div className="p-3 hover:bg-white/10 rounded-xl cursor-pointer transition">Evaluation Reports</div>
-                </nav>
-                <button onClick={handleLogout} className="mt-auto bg-red-500 p-3 rounded-xl font-bold hover:bg-red-600 transition">Logout</button>
-            </div>
+  const handleInstructorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    
+    await fetch('http://127.0.0.1:8000/api/admin/add-instructor', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}` 
+      },
+      body: JSON.stringify(instData)
+    });
+    setIsModalOpen(false);
+    alert('Instructor Added!');
+  };
 
-            {/* Main Content */}
-            <div className="flex-1 p-10">
-                <header className="flex justify-between items-center mb-10">
-                    <h1 className="text-3xl font-black text-[#4453f5]">System Overview</h1>
-                    <div className="bg-white px-6 py-2 rounded-full shadow-sm font-bold border border-[#86b7fe]">Admin Session Active</div>
-                </header>
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans">
+      <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center">
+        <h1 className="text-lg font-bold text-[#445cf5]">CPC Admin Portal</h1>
+        <button onClick={() => { localStorage.clear(); window.location.href = '/login'; }} className="bg-red-50 text-red-600 px-6 py-2 rounded-full font-bold text-sm">Sign Out</button>
+      </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Stats Cards */}
-                    <div className="bg-white p-8 rounded-[30px] shadow-sm border-l-8 border-blue-500">
-                        <h4 className="text-gray-500 font-bold uppercase text-xs mb-2">Total Teachers</h4>
-                        <p className="text-4xl font-black text-[#4453f5]">24</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-[30px] shadow-sm border-l-8 border-green-500">
-                        <h4 className="text-gray-500 font-bold uppercase text-xs mb-2">Evaluations Done</h4>
-                        <p className="text-4xl font-black text-[#4453f5]">1,204</p>
-                    </div>
-                    <div className="bg-white p-8 rounded-[30px] shadow-sm border-l-8 border-orange-500">
-                        <h4 className="text-gray-500 font-bold uppercase text-xs mb-2">Pending Students</h4>
-                        <p className="text-4xl font-black text-[#4453f5]">156</p>
-                    </div>
-                </div>
+      <div className="flex p-8 gap-8">
+        <nav className="w-64 flex flex-col gap-4">
+          {['Teachers', 'Instructors'].map((item) => (
+            <button key={item} onClick={() => setActiveTab(item)} className={`${activeTab === item ? 'bg-[#354ac7]' : 'bg-[#445cf5]'} text-white p-4 rounded-2xl font-bold shadow-md transition`}>
+              Manage {item}
+            </button>
+          ))}
+        </nav>
 
-                <div className="mt-10 bg-white p-8 rounded-[30px] shadow-sm min-h-[300px]">
-                    <h3 className="text-xl font-bold mb-4 text-[#4453f5]">Recent Activities</h3>
-                    <p className="text-gray-400">All systems are operational. No new issues reported.</p>
-                </div>
-            </div>
+        <main className="flex-1 flex flex-col gap-6">
+          <div className="bg-[#445cf5] p-8 rounded-3xl text-white shadow-lg">
+            <h2 className="text-2xl font-bold">Manage {activeTab}</h2>
+          </div>
+          <button onClick={() => setIsModalOpen(true)} className="bg-[#445cf5] text-white px-8 py-3 rounded-full font-bold self-start shadow-md">
+            + Add {activeTab === 'Teachers' ? 'Teacher' : 'Instructor'}
+          </button>
+        </main>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          {activeTab === 'Teachers' ? (
+            <form onSubmit={handleTeacherSubmit} className="bg-white p-8 rounded-3xl w-full max-w-sm flex flex-col gap-4">
+              <h2 className="text-xl font-bold">Add Teacher Account</h2>
+              <input placeholder="Name" className="border p-3 rounded-xl" onChange={e => setFormData({...formData, name: e.target.value})} required />
+              <input placeholder="ID Number" className="border p-3 rounded-xl" onChange={e => setFormData({...formData, id_number: e.target.value})} required />
+              <input type="password" placeholder="Password" className="border p-3 rounded-xl" onChange={e => setFormData({...formData, password: e.target.value})} required />
+              <button type="submit" className="bg-[#445cf5] text-white py-3 rounded-xl font-bold">Save</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="bg-gray-100 py-3 rounded-xl font-bold">Cancel</button>
+            </form>
+          ) : (
+            <form onSubmit={handleInstructorSubmit} className="bg-white p-8 rounded-3xl w-full max-w-sm flex flex-col gap-4">
+              <h2 className="text-xl font-bold">Add Instructor</h2>
+              <input placeholder="Name" className="border p-3 rounded-xl" onChange={e => setInstData({...instData, name: e.target.value})} required />
+              <input placeholder="Subject" className="border p-3 rounded-xl" onChange={e => setInstData({...instData, subject: e.target.value})} required />
+              <select className="border p-3 rounded-xl" onChange={e => setInstData({...instData, course: e.target.value})} required>
+                <option value="">Select Dept</option>
+                <option value="Bachelor of Science in Information Technology">BSIT</option>
+                <option value="Hospitality Management">HM</option>
+              </select>
+              <button type="submit" className="bg-[#445cf5] text-white py-3 rounded-xl font-bold">Save</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="bg-gray-100 py-3 rounded-xl font-bold">Cancel</button>
+            </form>
+          )}
         </div>
-    );
+      )}
+    </div>
+  );
 }
