@@ -6,7 +6,7 @@ function TeacherEvaluationFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const teacherId = searchParams.get('id');
+  const teacherId = searchParams.get('teacher_id') || searchParams.get('id');
   const teacherName = searchParams.get('name');
 
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -56,6 +56,7 @@ function TeacherEvaluationFormContent() {
         },
         body: JSON.stringify({
           teacher_id: teacherId,
+          type: 'teacher',
           respect: ratings.respect,
           communication: ratings.communication,
           leadership: ratings.leadership,
@@ -82,13 +83,13 @@ function TeacherEvaluationFormContent() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0f2ff] text-slate-500 font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center font-sans">
       <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#445cf5] border-t-transparent"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f0f2ff] p-4 md:p-8 flex items-center justify-center font-sans text-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8 flex items-center justify-center font-sans text-slate-800">
       <div className="bg-white max-w-2xl w-full p-6 md:p-8 rounded-[32px] shadow-xl border border-slate-100">
         <button
           onClick={() => router.back()}
@@ -97,13 +98,18 @@ function TeacherEvaluationFormContent() {
           ← Back to Dashboard
         </button>
 
-        <header className="mb-8 border-b pb-6">
-          <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
-            Peer Evaluation Form
-          </h2>
-          <p className="text-sm text-slate-500">
-            Evaluating: <span className="text-[#445cf5] font-bold">{decodeURIComponent(teacherName || '')}</span>
-          </p>
+        <header className="mb-8 border-b pb-6 flex items-center gap-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#445cf5] to-[#6366f1] rounded-full flex items-center justify-center overflow-hidden shadow-md">
+            <img src="/images/CPC.jpg" alt="CPC Logo" className="w-full h-full object-contain rounded-full" />
+          </div>
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
+              Teacher Evaluation Form
+            </h2>
+            <p className="text-sm text-slate-500">
+              Evaluating: <span className="text-[#445cf5] font-bold">{decodeURIComponent(teacherName || '')}</span>
+            </p>
+          </div>
         </header>
 
         {errorMessage && (
@@ -196,7 +202,7 @@ function TeacherEvaluationFormContent() {
             {submitting ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Processing...
+                Submitting Evaluation...
               </div>
             ) : 'Submit Evaluation'}
           </button>
@@ -209,7 +215,7 @@ function TeacherEvaluationFormContent() {
 export default function TeacherEvaluationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#f0f2ff] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#445cf5] border-t-transparent"></div>
       </div>
     }>

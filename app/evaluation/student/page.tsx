@@ -82,7 +82,7 @@ function EvaluationFormContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f0f2ff] p-4 md:p-8 font-sans flex justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-8 font-sans flex justify-center">
       <div className="w-full max-w-2xl">
         <button
           onClick={() => router.back()}
@@ -92,13 +92,18 @@ function EvaluationFormContent() {
         </button>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-[32px] shadow-xl border-t-8 border-[#445cf5] p-6 md:p-8">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
-              Evaluating {teacherName}
-            </h2>
-            <p className="text-slate-500">
-              Please provide honest feedback to help improve our teaching quality.
-            </p>
+          <div className="mb-8 flex items-center gap-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#445cf5] to-[#6366f1] rounded-full flex items-center justify-center overflow-hidden shadow-md">
+              <img src="/images/CPC.jpg" alt="CPC Logo" className="w-full h-full object-contain rounded-full" />
+            </div>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-black text-slate-800 mb-2">
+                Evaluating {teacherName}
+              </h2>
+              <p className="text-slate-500">
+                Please provide honest feedback to help improve our teaching quality.
+              </p>
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -196,12 +201,12 @@ function EvaluationFormContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-4 mt-8 bg-gradient-to-r from-[#445cf5] to-[#6366f1] text-white rounded-2xl font-bold text-lg shadow-md hover:shadow-lg disabled:opacity-70 transition-all"
+            className="w-full py-4 mt-8 bg-gradient-to-r from-[#445cf5] to-[#6366f1] text-white rounded-2xl font-bold text-lg shadow-md hover:from-[#3249d9] hover:to-[#5457e0] disabled:opacity-70 transition-all"
           >
             {submitting ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Submitting...
+                Submitting Evaluation...
               </div>
             ) : 'Submit Evaluation'}
           </button>
@@ -214,7 +219,7 @@ function EvaluationFormContent() {
 export default function StudentEvaluationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#f0f2ff] flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#445cf5] border-t-transparent"></div>
       </div>
     }>
